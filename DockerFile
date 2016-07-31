@@ -1,0 +1,34 @@
+# PANOPTES development container
+
+FROM ubuntu:16.04
+MAINTAINER Developers for PANOPTES project<https://github.com/panoptes/POCS>
+
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+RUN apt-get update --fix-missing && apt-get install -y wget bzip2 ca-certificates \
+    libglib2.0-0 libxext6 libsm6 libxrender1 \
+    git mercurial subversion vim dcraw exiftool 
+
+RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet https://repo.continuum.io/archive/Anaconda3-4.1.1-Linux-x86_64.sh -O ~/anaconda.sh && \
+    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+    rm ~/anaconda.sh
+
+ENV PATH /opt/conda/bin:$PATH
+ENV PANUSER=panoptes
+ENV PANDIR=/var/panoptes  
+ENV PANLOG=$PANDIR/logs 
+ENV POCS=$PANDIR/POCS  
+ENV PAWS=$PANDIR/PAWS 
+
+RUN wget https://raw.githubusercontent.com/gonzalo/gphoto2-updater/master/gphoto2-updater.sh && \ 
+        chmod +x gphoto2-updater.sh && ./gphoto2-updater.sh &&  rm gphoto2-updater.sh
+
+RUN wget http://astrometry.net/downloads/astrometry.net-latest.tar.gz && \ 
+     tar -xvzf astrometry.net-latest.tar.gz && rm astrometry.net-latest.tar.gz
+
+RUN mkdir -p  /var/panoptes/logs
+RUN pip -q install git+http://github.com/astropy/astroplan.git#egg=astroplan --no-deps
+RUN cd /var/panoptes/ && git clone https://github.com/panoptes/POCS.git 
+RUN cd /var/panoptes/ && git clone https://github.com/panoptes/PAWS.git
+RUN cd  /var/panoptes/POCS  && pip install -r requirements.txt && python setup.py install 
